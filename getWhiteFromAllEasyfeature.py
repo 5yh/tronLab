@@ -35,7 +35,7 @@ if __name__=='__main__':
     to_Address= to_Address.select("to").withColumnRenamed("to","address")
     allBlackAddress=from_Address.union(to_Address).distinct()
     print(allBlackAddress.count())
-    print(allEasyFeature.count())
+    print("所有easy",allEasyFeature.count())
     blackEasyFeature=allEasyFeature.join(allBlackAddress, "address", "inner")
     
     print(blackEasyFeature.count())
@@ -46,6 +46,6 @@ if __name__=='__main__':
     blackEasyFeature=blackEasyFeature.withColumn("label", lit(1))
     whiteEasyFeature=whiteEasyFeature.withColumn("label",lit(0))
     print(whiteEasyFeature.count())
-    blackEasyFeature.write.option("header", True).csv('file:///mnt/blockchain02/tronLabData/blackEasyFeature')
-    whiteEasyFeature.write.option("header", True).csv('file:///mnt/blockchain02/tronLabData/whiteEasyFeature')
+    # blackEasyFeature.write.option("header", True).csv('file:///mnt/blockchain02/tronLabData/blackEasyFeature')
+    # whiteEasyFeature.write.option("header", True).csv('file:///mnt/blockchain02/tronLabData/whiteEasyFeature')
 

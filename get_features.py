@@ -244,7 +244,11 @@ if __name__=='__main__':
                             StructField('isLoop',IntegerType(),True),
                             StructField('status',IntegerType(),True)
                             ])
-    all_data= spark_session.read.option("header", True).schema(ether_data_schema).csv('hdfs://ns00/lxl/t_edge_id')
+    # all_data= spark_session.read.option("header", True).schema(ether_data_schema).csv('hdfs://ns00/lxl/t_edge_id')
+    tron2022DataLoc="file:///mnt/blockchain02/tronLabData/parseData38004100/*.csv"
+    all_data = spark_session.read.csv(tron2022DataLoc,header=True, inferSchema=True)
+    all_data=all_data.withColumn("coin",F.lower(all_data['coin'])) \
+                            .withColumn("to",F.lower(all_data['to']))
     # ether_data_schema=StructType([
     #                     StructField('from',StringType(),True),
     #                     StructField('toType',StringType(),True),
@@ -267,10 +271,10 @@ if __name__=='__main__':
     #                     ])
     # all_data= spark_session.read.option("header", True).schema(ether_data_schema).csv('hdfs://ns00/lxl/2020_10_07.csv')
     # all_data = all_data.filter(F.col("isLoop")!=1)
-    all_data = all_data.filter(F.col("timestamp")>=1601395200)
-    all_data = all_data.filter(F.col("timestamp")<1610035200)
+    # all_data = all_data.filter(F.col("timestamp")>=1601395200)
+    # all_data = all_data.filter(F.col("timestamp")<1610035200)
     print(all_data.count())
-    all_data = all_data.withColumnRenamed("_from","from")
+    # all_data = all_data.withColumnRenamed("_from","from")
     all_data.show(5)
     ERC20_coin_result=all_data.select('from','to','value','coin','toType').filter(F.col("coin").isin(contract_address)).filter("toType == 'contract'")
     ERC20_coin_result=ERC20_coin_result.replace(to_replace=contract_address,value=coin_symbol,subset=['coin']) 
