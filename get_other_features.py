@@ -1,5 +1,9 @@
+import os
+os.environ["SPARK_HOME"] = "/home/lxl/syh/miniconda3/envs/newspark/lib/python3.11/site-packages/pyspark"
 import findspark
 findspark.init()
+
+
 from itertools import count
 import sys
 import time
@@ -128,11 +132,11 @@ if __name__=='__main__':
                                          .withColumnRenamed('avg_time_between_sent(timestamp)','Avg_time_between_sent')
     print("nihao1")
     print(Avg_time_between_sent.count())
-    # Avg_time_between_sent.show()
+    Avg_time_between_sent.show()
     print(type(Avg_time_between_sent))
     print("nihao2")
     # print(Avg_time_between_sent.head(5))
-    # Avg_time_between_sent.show(5)
+    Avg_time_between_sent.show(5)
     #Avg_time_between_received(账户接收交易的平均时间)
     #不过就是把from替换成了to而已
     value_data_to=all_data_lower.filter("transType == 'trx' ") \
