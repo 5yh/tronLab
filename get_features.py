@@ -284,7 +284,7 @@ if __name__=='__main__':
                                                                             .pivot('coin', coin_symbol) \
                                                                             .agg(F.sum('value')) \
                                                                             .fillna(0).withColumnRenamed('from','address') 
-    from_ERC20_coin_result.write.csv('/lr/day_data/1.7/from_contract_ERC20_coin_value')       
+    from_ERC20_coin_result.write.csv('file:///mnt/blockchain02/tronLabData/from_contract_ERC20_coin_value')       
 
     ERC20_coin_value_data=all_data.select('from','value','coin').filter(F.col("coin").isin(contract_address))
     ERC20_coin_value_data=ERC20_coin_value_data.replace(to_replace=contract_address,value=coin_symbol,subset=['coin'])
@@ -292,12 +292,12 @@ if __name__=='__main__':
                                                     .pivot('coin', coin_symbol) \
                                                     .agg(F.sum('value')) \
                                                     .fillna(0).withColumnRenamed('from','address') 
-    from_ERC20_coin_value_data.write.csv('/lr/day_data/1.7/from_ERC20_coin_value')
+    from_ERC20_coin_value_data.write.csv('file:///mnt/blockchain02/tronLabData/from_ERC20_coin_value')
     ERC20_coin_value_data=all_data.select('to','value','coin').filter(F.col("coin").isin(contract_address))
     ERC20_coin_value_data=ERC20_coin_value_data.replace(to_replace=contract_address,value=coin_symbol,subset=['coin'])
     to_ERC20_coin_value_data=ERC20_coin_value_data.groupBy(['to']) \
                                                     .pivot('coin', coin_symbol) \
                                                     .agg(F.sum('value')) \
                                                     .fillna(0).withColumnRenamed('to','address') 
-    to_ERC20_coin_value_data.write.csv('/lr/day_data/1.7/to_ERC20_coin_value')
+    to_ERC20_coin_value_data.write.csv('file:///mnt/blockchain02/tronLabData/to_ERC20_coin_value')
     spark_session.stop()
