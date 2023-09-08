@@ -11,6 +11,7 @@ from pyspark.sql.window import Window
 from pyspark.sql.types import *
 from pyspark.sql.functions import pandas_udf
 from pyspark.sql.functions import PandasUDFType
+from pyspark.sql.functions import unix_timestamp
 
 
 ##########################################################################################################
@@ -29,6 +30,10 @@ if __name__=='__main__':
     .builder \
     .appName("get_other_features") \
     .config("spark.some.config.option", "some-value") \
+    .config("spark.driver.extraJavaOptions", "-Djava.io.tmpdir=/mnt/blockchain03/findFullData/tmpdata") \
+    .config("spark.executor.extraJavaOptions", "-Djava.io.tmpdir=/mnt/blockchain03/findFullData/tmpdata") \
+    .config("spark.driver.memory", "200g") \
+    .config('spark.sql.shuffle.partitions',1000) \
     .getOrCreate()
     spark_session.sparkContext.setLogLevel("Error")
     ether_data_schema=StructType([
@@ -47,10 +52,14 @@ if __name__=='__main__':
                             StructField('isLoop',IntegerType(),True),
                             StructField('status',IntegerType(),True)
                             ])
-    all_data= spark_session.read.option("header", True).schema(ether_data_schema).csv('hdfs://ns00/lxl/t_edge_id')
-    all_data = all_data.filter(F.col("timestamp")>=1601395200)
-    all_data = all_data.filter(F.col("timestamp")<1610035200)
-    all_data = all_data.withColumn("timestamp",F.to_timestamp(all_data['timestamp']))
+    # all_data= spark_session.read.option("header", True).schema(ether_data_schema).csv('hdfs://ns00/lxl/t_edge_id')
+    tron2022DataLoc="file:///mnt/blockchain02/tronLabData/parseData38004100/*.csv"
+    all_data = spark_session.read.csv(tron2022DataLoc,header=True, inferSchema=True)
+    # all_data = all_data.filter(F.col("timestamp")>=1601395200)
+    # all_data = all_data.filter(F.col("timestamp")<1610035200)
+    print("after read all_data")
+    # all_data = all_data.withColumn("timestamp",F.to_timestamp(all_data['timestamp']))
+
     # ether_data_schema=StructType([
     #                         StructField('timestamp',TimestampType(),True),
     #                         StructField('from',StringType(),True),
@@ -91,6 +100,10 @@ if __name__=='__main__':
     # all_data= spark_session.read.option("header", True).schema(ether_data_schema).csv('hdfs://ns00/lxl/2020_10_07.csv')
     # all_data = all_data.filter(F.col("isLoop")!=1)
     # all_data = all_data.withColumn("timestamp",F.to_timestamp(all_data['timestamp']))
+    all_data = all_data.withColumn("timestamp", unix_timestamp(all_data["timestamp"], "yyyy/MM/dd, HH:mm:ss"))
+    all_data = all_data.withColumn("timestamp",F.to_timestamp(all_data['timestamp']))
+    nm=all_data.select("timestamp")
+    print(nm.head(5))
     # all_data.show(5)
     #还是先将from和to全部转换为小写格式
     all_data_lower=all_data.withColumn("coin",F.lower(all_data['coin'])) \
@@ -101,7 +114,7 @@ if __name__=='__main__':
     #这里注意的使用的是transType中的ETH类型和toContract的数据,之后再选取from和timastamp这两列数据
     #这里要注意的是,该指标求得是账户发送交易的平均时间,也就是说该账户只有发送了2笔以上的交易才可以求平均交易时间
     #因此当指标的结果为0的时候,意味着该账户只进行了一笔交易,即1笔交易没办法求交易的平均时间,用0代替
-    value_data_from=all_data_lower.filter("transType == 'ETH'") \
+    value_data_from=all_data_lower.filter("transType == 'trx'") \
                              .select('from','timestamp')
     @pandas_udf('int', PandasUDFType.GROUPED_AGG)
     def avg_time_between_sent(x):
@@ -116,7 +129,7 @@ if __name__=='__main__':
     Avg_time_between_sent.count()
     #Avg_time_between_received(账户接收交易的平均时间)
     #不过就是把from替换成了to而已
-    value_data_to=all_data_lower.filter("transType == 'ETH' ") \
+    value_data_to=all_data_lower.filter("transType == 'trx' ") \
                              .select('to','timestamp')
                              
     @pandas_udf('int', PandasUDFType.GROUPED_AGG)
@@ -155,12 +168,12 @@ if __name__=='__main__':
                              .agg(time_between_first_last(value_data_from_to['timestamp'])) \
                              .withColumnRenamed('time_between_first_last(timestamp)','Time_between_first_last')
                              
-    Time_between_first_last.show(5)
+    Time_between_first_last.show()
     
     #ERC20_avg_time_sent(发送 ERC20 代币交易间的平均时间)
     #也就是筛选出transType == 'ERC20'的数据就可以了
     #因为求得都是平均时间,因此就用上面那个求均值的就可以了
-    ERC20_data_from=all_data_lower.filter("transType == 'ERC20'") \
+    ERC20_data_from=all_data_lower.filter("transType == 'TRC20'") \
                                   .select('from','timestamp')
     ERC20_avg_time_sent=ERC20_data_from.groupby("from") \
                                        .agg(avg_time_between_sent(ERC20_data_from['timestamp'])) \
@@ -170,7 +183,7 @@ if __name__=='__main__':
     
     #ERC20_avg_time_received(接收 ERC20 代币交易间的平均时间)
     #就是把from改为to就可以了啊
-    ERC20_data_to=all_data_lower.filter("transType == 'ERC20'") \
+    ERC20_data_to=all_data_lower.filter("transType == 'TRC20'") \
                                 .select('to','timestamp')
     ERC20_avg_time_received=ERC20_data_to.groupby("to") \
                                        .agg(avg_time_between_sent(ERC20_data_to['timestamp'])) \
@@ -183,12 +196,12 @@ if __name__=='__main__':
     #这里要要注意的是需要分别取出1.fromtype为contract,to为normal  2.from为normal,totype为contract两种情况的数据
     
     #第一种情况,账户作为发送方和合约进行交易的情况
-    ERC20_data_from_contract=all_data_lower.filter("transType == 'ERC20'") \
+    ERC20_data_from_contract=all_data_lower.filter("transType == 'TRC20'") \
                                            .filter("toType == 'contract' and fromType == 'normal'") \
                                            .select('from','timestamp')
                                          
     #第二种情况,账户作为接收方和合约进行交易的情况
-    ERC20_data_to_contract=all_data_lower.filter("transType == 'ERC20'") \
+    ERC20_data_to_contract=all_data_lower.filter("transType == 'TRC20'") \
                                          .filter("toType == 'normal' and fromType == 'contract'") \
                                          .select('to','timestamp')
     
@@ -215,4 +228,4 @@ if __name__=='__main__':
                                           .join(ERC20_avg_time_received,on='address',how='left').fillna(0,subset=['ERC20_avg_time_received']) \
                                           .join(ERC20_avg_time_contracts,on='address',how='left').fillna(0,subset=['ERC20_avg_time_contracts'])                                    
     print('----开始存数据----')
-    final_easy_features_data.write.option("header", True).csv('/lr/day_data/1.7/other_features_V3')
+    final_easy_features_data.write.option("header", True).csv('file:///mnt/blockchain02/tronLabData/other_features_V3')
