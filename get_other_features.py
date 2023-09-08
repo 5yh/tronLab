@@ -127,6 +127,7 @@ if __name__=='__main__':
                                          .withColumnRenamed('from','address') \
                                          .withColumnRenamed('avg_time_between_sent(timestamp)','Avg_time_between_sent')
     Avg_time_between_sent.count()
+    Avg_time_between_sent.show(5)
     #Avg_time_between_received(账户接收交易的平均时间)
     #不过就是把from替换成了to而已
     value_data_to=all_data_lower.filter("transType == 'trx' ") \
@@ -168,7 +169,8 @@ if __name__=='__main__':
                              .agg(time_between_first_last(value_data_from_to['timestamp'])) \
                              .withColumnRenamed('time_between_first_last(timestamp)','Time_between_first_last')
                              
-    Time_between_first_last.show()
+    # Time_between_first_last.show()
+    print(Time_between_first_last.head(5))
     
     #ERC20_avg_time_sent(发送 ERC20 代币交易间的平均时间)
     #也就是筛选出transType == 'ERC20'的数据就可以了
