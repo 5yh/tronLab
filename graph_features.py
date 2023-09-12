@@ -1,5 +1,9 @@
 #节点数据就用之前整理好的hdfs://192.168.101.29:9000/zxf/final_features/part*.csv
 #边的数据就用hdfs://192.168.101.29:9000/zxf/final_graph_edges/part*.csv,边已经去重
+import os
+os.environ["SPARK_HOME"] = "/home/lxl/syh/miniconda3/envs/newspark/lib/python3.11/site-packages/pyspark"
+import findspark
+findspark.init()
 import findspark
 #import pandas as pd
 findspark.init()
@@ -23,11 +27,7 @@ if __name__=='__main__':
     .appName("get_graph_features") \
     .config("spark.some.config.option", "some-value") \
     .getOrCreate()
-    spark_session = SparkSession \
-                        .builder \
-                        .appName("get_all_graph_features") \
-                        .config("spark.some.config.option", "some-value")\
-                        .getOrCreate()
+
     #注意,id就是address
     spark_session.sparkContext.setLogLevel("Error")
     sc = SparkContext.getOrCreate()     
@@ -139,7 +139,9 @@ if __name__=='__main__':
                                 # StructField('FEI(balance)',FloatType(),True),
                                 # StructField('ETH(balance)',FloatType(),True)
                                 ])
-    all_features_data = spark_session.read.option("header",True).schema(all_features_schema).csv('hdfs://ns00/lr/day_data/1.7/final_features/part*.csv')
+    # all_features_data = spark_session.read.option("header",True).schema(all_features_schema).csv('hdfs://ns00/lr/day_data/1.7/final_features/part*.csv')
+    allEasyFeatureLoc="file:///mnt/blockchain02/tronLabData/easy_features"
+    all_features_data = spark_session.read.csv(allEasyFeatureLoc,header=True, inferSchema=True)
     print(all_features_data.head(1))
     #all_features_data = all_features_data.withColumnRenamed('address','id')
     #边数据,src就是from_address,dst就是to_address
@@ -149,7 +151,7 @@ if __name__=='__main__':
     #                         StructField('dst',StringType(),True)
     #                         ])
     #edges_data=spark_session.read.option("header", True).option("timestampFormat", "yyyy/MM/dd, HH:mm:ss").schema(ether_data_schema).csv('hdfs://ns00/lr/abcddd.csv')
-    edges_data = spark_session.read.option("header",True).option('inferSchema',True).csv('hdfs://ns00/lr/day_data/1.7/seventh_data_edges.csv')
+    edges_data = spark_session.read.option("header",True).option('inferSchema',True).csv('file:///mnt/blockchain02/tronLabData/edgefile(idfromto)')
     edges_data = edges_data.select('id','from','to')
     edges_data = edges_data.withColumnRenamed('from','src').withColumnRenamed('to','dst')
     #edges_data = edges_data.withColumnRenamed('from','src').withColumnRenamed('to','dst')
@@ -177,6 +179,7 @@ if __name__=='__main__':
         address_data=address_data.join(agg,'id','left')
         print('指标'+str(col_)+'已经计算完毕')
     address_data.withColumnRenamed('id','address').fillna(0)#.write.option("header", True).csv('/lr/first_month_data/graph_edges_')
+
     
     
     all_features_data = all_features_data.fillna(0)
@@ -184,7 +187,7 @@ if __name__=='__main__':
     final_features_data = all_features_data.join(address_data,on = 'id',how = 'left').fillna(0)
     final_features_data.withColumnRenamed('id','address')
     print('----特征数据处理完成，开始保存----')
-    final_features_data.write.option('header',True).csv('/lr/day_data/1.7/three_month_data')
+    final_features_data.write.option('header',True).csv('file:///mnt/blockchain02/tronLabData/three_month_data')
     print('特征数据保存完成')
     spark_session.stop()
     
