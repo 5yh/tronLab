@@ -20,12 +20,17 @@ import numpy as np
 from pyspark.sql.functions import mean as sqlmean
 from graphframes.lib import AggregateMessages as AM
 from pyspark import SparkContext
+from pyspark.sql.functions import monotonically_increasing_id
 
 if __name__=='__main__':
     spark_session = SparkSession \
     .builder \
     .appName("get_graph_features") \
     .config("spark.some.config.option", "some-value") \
+    .config("spark.driver.extraJavaOptions", "-Djava.io.tmpdir=/mnt/blockchain03/findFullData/tmpdata") \
+    .config("spark.executor.extraJavaOptions", "-Djava.io.tmpdir=/mnt/blockchain03/findFullData/tmpdata") \
+    .config("spark.driver.memory", "200g") \
+    .config('spark.sql.shuffle.partitions',1000) \
     .getOrCreate()
 
     #注意,id就是address
@@ -140,10 +145,14 @@ if __name__=='__main__':
                                 # StructField('ETH(balance)',FloatType(),True)
                                 ])
     # all_features_data = spark_session.read.option("header",True).schema(all_features_schema).csv('hdfs://ns00/lr/day_data/1.7/final_features/part*.csv')
-    allEasyFeatureLoc="file:///mnt/blockchain02/tronLabData/easy_features"
-    all_features_data = spark_session.read.csv(allEasyFeatureLoc,header=True, inferSchema=True)
+    whiteFeatureLoc="file:///mnt/blockchain02/tronLabData/whiteEasyFeature"
+    all_features_data = spark_session.read.csv(whiteFeatureLoc,header=True, inferSchema=True)
+    blackFeatureLoc="file:///mnt/blockchain02/tronLabData/blackEasyFeature"
+    black_data=spark_session.read.csv(blackFeatureLoc,header=True, inferSchema=True)
+    all_features_data=all_features_data.union(black_data)
+
     print(all_features_data.head(1))
-    #all_features_data = all_features_data.withColumnRenamed('address','id')
+    all_features_data = all_features_data.withColumnRenamed('address','id')
     #边数据,src就是from_address,dst就是to_address
     # ether_data_schema=StructType([
     #                         StructField('id',IntegerType(),True),
@@ -153,15 +162,19 @@ if __name__=='__main__':
     #edges_data=spark_session.read.option("header", True).option("timestampFormat", "yyyy/MM/dd, HH:mm:ss").schema(ether_data_schema).csv('hdfs://ns00/lr/abcddd.csv')
     edges_data = spark_session.read.option("header",True).option('inferSchema',True).csv('file:///mnt/blockchain02/tronLabData/edgefile(idfromto)')
     edges_data = edges_data.select('id','from','to')
+    edges_data=edges_data.withColumn("from",F.lower(edges_data['from'])) \
+                            .withColumn("to",F.lower(edges_data['to']))
     edges_data = edges_data.withColumnRenamed('from','src').withColumnRenamed('to','dst')
     #edges_data = edges_data.withColumnRenamed('from','src').withColumnRenamed('to','dst')
     #edges_data_=edges_data.select(all_features_data.columns[1:16])   
     edges_data_=edges_data.select(['src','dst'])
 
+    # all_features_data = all_features_data.withColumn("id", monotonically_increasing_id())
 
     #建图，一次性跑完所有的特征会内存报错,所以20个20个特征的跑,
     features=all_features_data.columns
     vertices=all_features_data.select(features)  #节点信息
+
     print('开始建图')
     graph = GraphFrame(vertices,edges_data_)  #边数据
     print('建图完毕')
