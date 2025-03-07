@@ -1,8 +1,10 @@
 # TronLab Data Processing
 
-这是一个用于处理TronLab数据的项目，使用了PySpark进行大规模数据处理和特征提取。项目包含多个Python脚本，每个脚本执行特定的数据处理任务。
+[中文版本](./readmeCN.md)
 
-## 项目结构
+This is a project for processing TronLab data using PySpark for large-scale data processing and feature extraction. The project includes multiple Python scripts, each performing specific data processing tasks.
+
+## Project Structure
 
 ```
 checkCreateContractAnd0.py
@@ -21,54 +23,54 @@ groupbyTransType.py
 simpleWeb3ApiCall.py
 ```
 
-## 脚本说明
+## Script Descriptions
 
-- **checkCreateContractAnd0.py**: 计算createContract个数。
-- **convertLabeledAddress.py**: 将Tron地址转换为EVM地址。
-- **convertTronAddressToEvmAddress.py**: 提供Tron地址到EVM地址的转换函数。
-- **deleteNoBlackInBlackFeatures.py**: 删除不在黑名单中的特征数据。
-- **findSameAdressBetweenTwoCsv.py**: 查找两个CSV文件中相同的地址。
-- **get_easy_features.py**: 提取简单特征。
-- **get_edge.py**: 提取边数据。
-- **get_features.py**: 提取各种特征数据。
-- **get_other_features.py**: 提取涉及时间的特征数据。
-- **get_white_future.py**: 作废脚本。
-- **getWhiteFromAllEasyfeature.py**: 从所有简单特征中提取白名单特征。
-- **graph_features.py**: 计算图特征。
-- **groupbyTransType.py**: 按交易类型分组统计。
-- **simpleWeb3ApiCall.py**: 简单的Web3 API调用测试。
+- **checkCreateContractAnd0.py**: Calculate the number of createContract.
+- **convertLabeledAddress.py**: Convert Tron addresses to EVM addresses.
+- **convertTronAddressToEvmAddress.py**: Provide a function to convert Tron addresses to EVM addresses.
+- **deleteNoBlackInBlackFeatures.py**: Delete features not in the blacklist.
+- **findSameAdressBetweenTwoCsv.py**: Find the same addresses between two CSV files.
+- **get_easy_features.py**: Extract simple features.
+- **get_edge.py**: Extract edge data.
+- **get_features.py**: Extract various feature data.
+- **get_other_features.py**: Extract time-related feature data.
+- **get_white_future.py**: Deprecated script.
+- **getWhiteFromAllEasyfeature.py**: Extract whitelist features from all simple features.
+- **graph_features.py**: Calculate graph features.
+- **groupbyTransType.py**: Group and count transactions by type.
+- **simpleWeb3ApiCall.py**: Simple Web3 API call test.
 
-## 运行环境
+## Environment
 
 - Python 3.11
 - PySpark
 - Web3.py
 
-## 使用方法
+## Usage
 
-1. 克隆仓库到本地：
+1. Clone the repository:
     ```sh
     git clone https://github.com/yourusername/TronLabDataProcessing.git
     ```
 
-2. 安装依赖：
+2. Install dependencies:
     ```sh
     pip install -r requirements.txt
     ```
 
-3. 根据需要运行相应的脚本：
+3. Run the desired script:
     ```sh
     python checkCreateContractAnd0.py
     ```
 
-## 贡献
+## Contributing
 
-欢迎提交问题和贡献代码！请确保在提交PR之前运行所有测试。
+Feel free to submit issues and contribute code! Please ensure all tests pass before submitting a PR.
 
-## 许可证
+## License
 
-本项目采用 MIT 许可证。详情请参阅 LICENSE 文件。
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 ---
 
-感谢您使用TronLab Data Processing项目！如果有任何问题或建议，请随时联系我。
+Thank you for using the TronLab Data Processing project! If you have any questions or suggestions, please feel free to contact me.
